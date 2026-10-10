@@ -1598,3 +1598,223 @@ dialog::backdrop {
     color: #666b7d;
   }
 }
+
+/* V1.2 shares a mobile palette across pages; desktop values stay intact. */
+@media (max-width: 600px) {
+  .app-shell {
+    --chart-necessary: #7985b5;
+    --chart-discretionary: #c3c9de;
+    --chart-empty: #edeef5;
+    color: #222631;
+    background: #f9f9fb;
+    min-height: 100dvh;
+  }
+  .app-shell .topbar {
+    height: 52px;
+    padding: 0 16px;
+    background: #fff;
+    border-color: #edeef5;
+  }
+  .app-shell .breadcrumb,
+  .app-shell .page-heading {
+    display: none;
+  }
+  .app-shell .mobile-home-title {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+  .app-shell .mobile-home-title strong {
+    font-size: 20px;
+  }
+  .app-shell .mobile-home-title span {
+    font-size: 12px;
+    color: #595f73;
+  }
+  .app-shell main {
+    padding: 12px 16px calc(100px + env(safe-area-inset-bottom));
+  }
+  .app-shell .panel {
+    background: #fff;
+    border-color: #edeef5;
+    padding: 14px;
+  }
+  .app-shell .section-title {
+    margin-bottom: 10px;
+  }
+  .app-shell .sidebar {
+    background: #fffffff2;
+    border-color: #edeef5;
+  }
+  .app-shell .sidebar nav button.active,
+  .app-shell .text-button {
+    color: #465580;
+  }
+  .app-shell .local-status {
+    color: #465580;
+    background: #edeef5;
+    border-color: #c3c9de;
+  }
+  .app-shell .primary {
+    background: #596795;
+    color: #fff;
+  }
+  .app-shell .secondary {
+    background: #edeef5;
+    color: #394568;
+    border-color: #c3c9de;
+  }
+  .app-shell :is(input, select, textarea) {
+    color: #222631;
+    border-color: #c3c9de;
+  }
+  .app-shell :is(button, input, select, textarea):focus-visible {
+    outline-color: #596795;
+  }
+  .app-shell .entry {
+    padding: 12px 0;
+  }
+  .app-shell .entry-icon {
+    background: #edeef5;
+    color: #596795;
+  }
+  .app-shell .entry-icon.discretionary {
+    background: #f1f2f7;
+    color: #666d86;
+  }
+  .app-shell
+    :is(
+      .entry-info > span,
+      .entry-amount,
+      .icon-button,
+      .count,
+      .sub-label,
+      .chart-foot,
+      .chart-empty,
+      .bar-column,
+      .donut span,
+      .legend > div,
+      .legend strong
+    ) {
+    color: #595f73;
+  }
+  .app-shell .count {
+    background: #edeef5;
+  }
+  .app-shell .empty-icon {
+    background: #edeef5;
+    color: #596795;
+  }
+  .app-shell .empty p,
+  .app-shell .page-footer {
+    color: #595f73;
+  }
+  .page-home .summary-grid {
+    background: #edeef5;
+    border: 1px solid #e3e5ef;
+    border-radius: 14px;
+    gap: 0;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+  }
+  .page-home .total-card {
+    background: transparent;
+    border-radius: 0;
+    padding: 0 0 8px;
+    min-height: 0;
+  }
+  .page-home .big-money {
+    line-height: 1.4;
+  }
+  .page-home .summary-card {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    padding: 8px 0 0;
+    min-height: 0;
+  }
+  .page-home .summary-card + .summary-card {
+    padding-left: 12px;
+  }
+  .page-home .summary-money {
+    margin-top: 3px;
+    line-height: 1.4;
+  }
+  .page-home .progress {
+    background: #fff;
+    margin-top: 5px;
+  }
+  .page-home .home-columns {
+    margin-bottom: 12px;
+  }
+  .page-home .quick-panel .sub-label {
+    display: none;
+  }
+  .app-shell .ledger-total {
+    background: #edeef5;
+    color: #222631;
+  }
+  .app-shell .ledger-total strong {
+    color: #222631;
+    overflow-wrap: anywhere;
+  }
+  .app-shell .month-picker {
+    color: #595f73;
+  }
+  .app-shell .stats-header {
+    margin-bottom: 12px;
+  }
+  .app-shell .stats-header h2 {
+    font-size: 16px;
+  }
+  .app-shell .donut {
+    margin: 16px auto;
+  }
+  .app-shell .donut > div {
+    background: #fff;
+  }
+  .app-shell .donut strong {
+    color: #222631;
+  }
+  .app-shell .legend-dot,
+  .app-shell .chart-foot i,
+  .app-shell .bar-stack b {
+    background: #7985b5;
+  }
+  .app-shell .legend-dot.warm,
+  .app-shell .chart-foot i.warm,
+  .app-shell .bar-stack i {
+    background: #c3c9de;
+  }
+  .app-shell .bar-chart {
+    margin-top: 18px;
+  }
+  .app-shell .bar-value {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .app-shell .bar-track {
+    background: repeating-linear-gradient(
+      to top,
+      transparent 0,
+      transparent 41px,
+      #edeef5 42px
+    );
+  }
+}
+@media (max-width: 600px) {
+  .app-shell .sidebar nav button {
+    color: #666d86;
+  }
+  .app-shell .sidebar nav button.active {
+    color: #465580;
+  }
+  .app-shell .section-title h2 svg,
+  .app-shell .confirmation-tip svg,
+  .app-shell .page-footer svg {
+    color: #596795;
+  }
+  .app-shell .entry {
+    border-color: #edeef5;
+  }
+}

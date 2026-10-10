@@ -129,6 +129,15 @@ export default function App() {
     needRefresh: [needRefresh],
     updateServiceWorker,
   } = useRegisterSW();
+  const [isMobile, setIsMobile] = useState(
+    () => window.matchMedia("(max-width: 600px)").matches,
+  );
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 600px)");
+    const change = () => setIsMobile(query.matches);
+    query.addEventListener("change", change);
+    return () => query.removeEventListener("change", change);
+  }, []);
   const repository = useRef<IndexedDBLedger | null>(null);
   const getRepo = () =>
     repository.current ?? (repository.current = new IndexedDBLedger());
@@ -574,8 +583,16 @@ export default function App() {
       <div className="main-shell">
         <header className="topbar">
           <div className="mobile-home-title">
-            <strong>小账</strong>
-            <span>{monthLabel(localDate().slice(0, 7))}</span>
+            <strong>
+              {page === "home"
+                ? "小账"
+                : page === "ledger"
+                  ? "消费流水"
+                  : "统计分析"}
+            </strong>
+            <span>
+              {monthLabel(page === "home" ? localDate().slice(0, 7) : month)}
+            </span>
           </div>
           <span className="breadcrumb">
             我的记账本 <span>/</span>{" "}
@@ -650,6 +667,8 @@ export default function App() {
           )}
           {dbError && (
             <div className="banner error" role="alert">
+              <strong>账本未能读取，当前金额和记录数量未知。</strong>
+              <br />
               {dbError}
               <button onClick={() => void refresh()}>重试</button>
             </div>
@@ -665,7 +684,7 @@ export default function App() {
               {error}
             </div>
           )}
-          {page === "home" && (
+          {page === "home" && !loading && !dbError && (
             <div className="home-content">
               <section className="summary-grid" aria-label="本月概览">
                 <div className="total-card">
@@ -756,7 +775,11 @@ export default function App() {
                   <textarea
                     ref={inputRef}
                     id="expense-text"
-                    placeholder="例如：今天买菜花了38块，买零食花了25块"
+                    placeholder={
+                      isMobile
+                        ? "买菜38元，零食25元"
+                        : "例如：今天买菜花了38块，买零食花了25块"
+                    }
                     value={text}
                     onChange={(e) => {
                       setText(e.target.value);
@@ -985,7 +1008,7 @@ export default function App() {
               </section>
             </div>
           )}
-          {page === "ledger" && (
+          {page === "ledger" && !loading && !dbError && (
             <section className="panel">
               <div className="section-title">
                 <h2>
@@ -1000,7 +1023,7 @@ export default function App() {
               {rows(selected)}
             </section>
           )}
-          {page === "stats" && (
+          {page === "stats" && !loading && !dbError && (
             <>
               <div className="stats-header">
                 <h2>月度概览</h2>
@@ -1018,8 +1041,8 @@ export default function App() {
                     aria-label={`必要生活开支 ${money(stats.necessary)} 元，非必要开支 ${money(stats.discretionary)} 元`}
                     style={{
                       background: stats.total
-                        ? `conic-gradient(#49745d 0 ${(stats.necessary / stats.total) * 100}%, #c9a26f ${(stats.necessary / stats.total) * 100}% 100%)`
-                        : "#e8ece4",
+                        ? `conic-gradient(var(--chart-necessary, #49745d) 0 ${(stats.necessary / stats.total) * 100}%, var(--chart-discretionary, #c9a26f) ${(stats.necessary / stats.total) * 100}% 100%)`
+                        : "var(--chart-empty, #e8ece4)",
                     }}
                   >
                     <div>
@@ -1188,9 +1211,10 @@ export default function App() {
             <div className="backup-section">
               <h3>备份与恢复</h3>
               <p>
-                共 {entries.length}{" "}
-                笔记录。清除网站数据、卸载或设备故障可能造成丢失，建议定期导出
-                JSON。
+                {dbError || loading
+                  ? "尚无法确认记录数量。"
+                  : `共 ${entries.length} 笔记录。`}
+                清除网站数据、卸载或设备故障可能造成丢失，建议定期导出 JSON。
               </p>
               <button
                 className="secondary full"

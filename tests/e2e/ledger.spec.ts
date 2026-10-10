@@ -388,14 +388,14 @@ test("V1.1 手机首屏、聚焦展开、长金额和页面隔离", async ({
       ),
     ).toBe(true);
     await page.getByRole("button", { name: "消费流水", exact: true }).click();
-    await expect(page.locator(".page-heading")).toBeVisible();
+    await expect(page.locator(".page-heading")).not.toBeVisible();
     expect(
       await page
         .locator(".app-shell")
         .evaluate((el) => getComputedStyle(el).backgroundColor),
-    ).not.toBe("rgb(249, 249, 251)");
+    ).toBe("rgb(249, 249, 251)");
     await page.getByRole("button", { name: "统计分析", exact: true }).click();
-    await expect(page.locator(".page-heading")).toBeVisible();
+    await expect(page.locator(".page-heading")).not.toBeVisible();
     // New context per width is unnecessary: clear only this automated test's records via UI.
     await page.getByRole("button", { name: "首页", exact: true }).click();
     for (const name of ["买菜", "零食"]) {
