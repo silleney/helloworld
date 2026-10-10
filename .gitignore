@@ -1,0 +1,25 @@
+node_modules/
+dist/
+test-results/
+playwright-report/
+*.local
+*.tsbuildinfo
+
+# Local secrets, certificates and transient files
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+certs/
+certificates/
+*.log
+*.tmp
+*.swp
+.DS_Store
+Thumbs.db
+coverage/
+.cache/
