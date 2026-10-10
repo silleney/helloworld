@@ -100,15 +100,13 @@ test("JSON 备份、重复恢复与异常文件拒绝", async ({ page }) => {
   await expect(page.getByRole("status")).toContainText("新增 0 笔，跳过 1 笔");
   await expect(page.locator(".entry")).toHaveCount(1);
   await page.getByRole("button", { name: "仅当前浏览器" }).click();
-  await page
-    .locator("input[type=file]")
-    .setInputFiles({
-      name: "bad.json",
-      mimeType: "application/json",
-      buffer: Buffer.from(
-        JSON.stringify({ version: 1, entries: [{ amount_cents: -10 }] }),
-      ),
-    });
+  await page.locator("input[type=file]").setInputFiles({
+    name: "bad.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(
+      JSON.stringify({ version: 1, entries: [{ amount_cents: -10 }] }),
+    ),
+  });
   await expect(page.getByRole("alert")).toContainText("无效");
   await page.getByRole("button", { name: "关闭弹窗" }).click();
   await expect(page.locator(".entry")).toHaveCount(1);
@@ -315,4 +313,97 @@ test("新浏览器从 JSON 恢复，冲突不覆盖，CSV 可导出", async ({
   download = page.waitForEvent("download");
   await page.getByRole("button", { name: "导出 CSV 流水" }).click();
   expect((await download).suggestedFilename()).toContain(".csv");
+});
+
+test("V1.1 符号解析、精确合计、取消保留原文与零候选反馈", async ({
+  page,
+}, testInfo) => {
+  await open(page);
+  const input = page.getByLabel("今天花了什么？");
+  await input.fill("买菜¥0.10，零食￥0.20元");
+  await page.getByRole("button", { name: "识别账目" }).click();
+  await expect(page.locator(".draft-row")).toHaveCount(2);
+  await expect(page.locator(".entry")).toHaveCount(0);
+  if (testInfo.project.name === "iphone-size") {
+    await expect(page.locator(".mobile-draft-total")).toContainText(
+      "合计 ¥ 0.30",
+    );
+    await page.getByLabel("金额 2", { exact: true }).fill("1.234");
+    await expect(page.locator(".mobile-draft-total")).toContainText(
+      "合计待核对",
+    );
+  }
+  await page.getByRole("button", { name: "取消待确认", exact: true }).click();
+  await expect(input).toHaveValue("买菜¥0.10，零食￥0.20元");
+  await page.reload();
+  await expect(input).toHaveValue("买菜¥0.10，零食￥0.20元");
+  await input.fill("买2斤苹果");
+  await page.getByRole("button", { name: "识别账目" }).click();
+  await expect(input).toHaveValue("买2斤苹果");
+  await expect(page.locator(".entry")).toHaveCount(0);
+  if (testInfo.project.name === "iphone-size") {
+    await expect(
+      page.locator(".mobile-input-feedback").getByRole("alert"),
+    ).toContainText("没有识别到明确金额");
+    await expect(
+      page.getByRole("region", { name: "确认账目" }),
+    ).not.toBeVisible();
+  } else
+    await expect(page.locator(".banner.warning").last()).toContainText(
+      "没有识别到明确金额",
+    );
+});
+
+test("V1.1 手机首屏、聚焦展开、长金额和页面隔离", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "iphone-size", "只检查手机首页");
+  for (const width of [320, 375, 390, 430]) {
+    await page.setViewportSize({ width, height: 700 });
+    await open(page);
+    await expect(page.locator(".page-heading")).not.toBeVisible();
+    const input = page.getByLabel("今天花了什么？");
+    const h = await input.evaluate((el) => el.getBoundingClientRect().height);
+    const button = page.getByRole("button", { name: "识别账目" });
+    expect(
+      await button.evaluate((el) => el.getBoundingClientRect().bottom),
+    ).toBeLessThan(620);
+    await input.focus();
+    await expect
+      .poll(() => input.evaluate((el) => el.getBoundingClientRect().height))
+      .toBeGreaterThan(h);
+    await input.fill("买菜¥999999999，零食￥999999999");
+    await button.click();
+    expect(await input.evaluate((el) => document.activeElement === el)).toBe(
+      false,
+    );
+    await expect(page.locator(".mobile-draft-total")).toContainText(
+      "1,999,999,998.00",
+    );
+    await page.getByRole("button", { name: "确认保存 2 笔" }).click();
+    await expect(page.locator(".entry")).toHaveCount(2);
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    await page.getByRole("button", { name: "消费流水", exact: true }).click();
+    await expect(page.locator(".page-heading")).toBeVisible();
+    expect(
+      await page
+        .locator(".app-shell")
+        .evaluate((el) => getComputedStyle(el).backgroundColor),
+    ).not.toBe("rgb(249, 249, 251)");
+    await page.getByRole("button", { name: "统计分析", exact: true }).click();
+    await expect(page.locator(".page-heading")).toBeVisible();
+    // New context per width is unnecessary: clear only this automated test's records via UI.
+    await page.getByRole("button", { name: "首页", exact: true }).click();
+    for (const name of ["买菜", "零食"]) {
+      await page
+        .getByRole("button", { name: `删除 ${name}`, exact: true })
+        .click();
+      await page.getByRole("button", { name: "确认删除", exact: true }).click();
+      await expect(page.locator(".entry")).toHaveCount(name === "买菜" ? 1 : 0);
+    }
+  }
 });

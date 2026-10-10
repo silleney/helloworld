@@ -12,6 +12,7 @@ import {
   planImport,
   suggestCategory,
   totals,
+  toCents,
   validateBackup,
 } from "./domain";
 import type { Draft, Entry } from "./domain";
@@ -78,8 +79,15 @@ const blank = (): Draft => ({
 });
 function getSaved(): string {
   try {
-    const raw = JSON.parse(localStorage.getItem("little-ledger-input") ?? "{}");
-    return typeof raw.text === "string" ? raw.text : "";
+    const stored = localStorage.getItem("little-ledger-input") ?? "";
+    // Current versions store plain text; retain compatibility with older JSON wrappers.
+    try {
+      const raw = JSON.parse(stored);
+      if (raw && typeof raw.text === "string") return raw.text;
+    } catch {
+      /* plain text */
+    }
+    return stored;
   } catch {
     return "";
   }
@@ -145,6 +153,7 @@ export default function App() {
   const lock = useRef(false),
     speech = useRef<Speech | null>(null),
     [listening, setListening] = useState(false);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const channel = useRef<BroadcastChannel | null>(null);
   const modalRef = useRef<HTMLDialogElement>(null);
@@ -272,6 +281,8 @@ export default function App() {
     setWarnings(result.warnings);
     setComposer(true);
     setError("");
+    if (result.drafts.length && window.matchMedia("(max-width: 600px)").matches)
+      inputRef.current?.blur();
   };
   const manual = () => {
     setEditing(null);
@@ -385,6 +396,13 @@ export default function App() {
       if (fileRef.current) fileRef.current.value = "";
     }
   };
+  let draftTotal: number | null = 0;
+  try {
+    for (const d of drafts) draftTotal += toCents(d.amount);
+    if (!Number.isSafeInteger(draftTotal)) draftTotal = null;
+  } catch {
+    draftTotal = null;
+  }
   const sorted = [...entries].sort(
     (a, b) =>
       b.spent_on.localeCompare(a.spent_on) ||
@@ -492,7 +510,7 @@ export default function App() {
       </div>
     );
   return (
-    <div className="app-shell">
+    <div className={`app-shell page-${page}`}>
       <aside className="sidebar">
         <a
           href="#"
@@ -555,6 +573,10 @@ export default function App() {
       </aside>
       <div className="main-shell">
         <header className="topbar">
+          <div className="mobile-home-title">
+            <strong>小账</strong>
+            <span>{monthLabel(localDate().slice(0, 7))}</span>
+          </div>
           <span className="breadcrumb">
             我的记账本 <span>/</span>{" "}
             {page === "home"
@@ -639,7 +661,7 @@ export default function App() {
             </div>
           )}
           {error && !modal && (
-            <div className="banner error" role="alert">
+            <div className="banner error global-error" role="alert">
               {error}
             </div>
           )}
@@ -732,6 +754,7 @@ export default function App() {
                     今天花了什么？
                   </label>
                   <textarea
+                    ref={inputRef}
                     id="expense-text"
                     placeholder="例如：今天买菜花了38块，买零食花了25块"
                     value={text}
@@ -773,6 +796,19 @@ export default function App() {
                     >
                       手动记账
                     </button>
+                  </div>
+                  <div className="mobile-input-feedback">
+                    {error && !modal && (
+                      <div className="banner error" role="alert">
+                        {error}
+                      </div>
+                    )}
+                    {!drafts.length &&
+                      warnings.map((w, i) => (
+                        <div className="banner warning" role="alert" key={i}>
+                          {w}
+                        </div>
+                      ))}
                   </div>
                   <div className="confirmation-tip">
                     <Icon name="shield" size={15} />
@@ -822,10 +858,19 @@ export default function App() {
                 </aside>
               </div>
               {composer && (
-                <section className="panel drafts-panel" aria-label="确认账目">
+                <section
+                  className={`panel drafts-panel ${drafts.length ? "" : "empty-composer"}`}
+                  aria-label="确认账目"
+                >
                   <div className="section-title">
                     <h2>{editing ? "编辑账目" : "核对后，再保存"}</h2>
                     <span className="sub-label">{drafts.length} 笔待确认</span>
+                  </div>
+                  <div className="mobile-draft-total">
+                    {drafts.length} 笔待确认 ·{" "}
+                    {draftTotal === null
+                      ? "合计待核对：请填写有效金额"
+                      : `合计 ¥ ${money(draftTotal)}`}
                   </div>
                   {warnings.map((w, i) => (
                     <div className="banner warning" key={i}>

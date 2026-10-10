@@ -165,3 +165,79 @@ it("备份比较不依赖 JSON 属性顺序", () => {
   const b = Object.fromEntries(Object.entries(a).reverse()) as Entry;
   expect(planImport([b], [a]).skipped).toBe(1);
 });
+
+describe("V1.1 人民币金额边界", () => {
+  it.each([
+    ["¥38", "38.00"],
+    ["￥38", "38.00"],
+    [" ¥ 38", "38.00"],
+    ["38 元", "38.00"],
+    ["38 块", "38.00"],
+    ["¥38.50", "38.50"],
+    ["￥38.50", "38.50"],
+    ["¥38元", "38.00"],
+    ["￥ 12块5", "12.50"],
+    ["¥0.10", "0.10"],
+    ["￥0.20", "0.20"],
+  ])("货币格式 %s", (token, amount) => {
+    const r = parseExpenses("买菜" + token, [], today);
+    expect(r.warnings).toEqual([]);
+    expect(r.drafts).toHaveLength(1);
+    expect(r.drafts[0]).toMatchObject({ description: "买菜", amount });
+  });
+  it("混合符号和单位不产生重复候选", () => {
+    const r = parseExpenses("买菜¥38元，零食￥12.5，公交 2 元", [], today);
+    expect(r.drafts.map((d) => [d.description, d.amount])).toEqual([
+      ["买菜", "38.00"],
+      ["零食", "12.50"],
+      ["公交", "2.00"],
+    ]);
+    expect(r.warnings).toEqual([]);
+    expect(
+      parseExpenses("买菜¥38元，零食￥12.5，公交 2 元", [], today),
+    ).toEqual(r);
+  });
+  it("商品数量保留在描述中", () => {
+    expect(parseExpenses("买2斤苹果¥18", [], today).drafts[0]).toMatchObject({
+      description: "买2斤苹果",
+      amount: "18.00",
+    });
+    expect(parseExpenses("买2斤苹果，3瓶水", [], today).drafts).toEqual([]);
+  });
+  it.each([
+    "买菜¥-5",
+    "买菜￥ -5元",
+    "买菜- ¥5",
+    "买菜负￥5",
+    "买菜¥负5元",
+    "买菜¥0",
+    "买菜¥12.345",
+    "买菜￥12.340元",
+    "买菜¥1.2.3",
+    "买菜¥999999999.99",
+    "买菜¥20到¥30",
+    "买菜￥20或￥30",
+    "买菜大约¥38",
+    "买菜¥38左右",
+    "买菜¥¥38",
+    "买菜¥.5元",
+    "买菜¥20-30",
+    "买菜￥20～￥30",
+    "买菜¥1e3",
+    "买菜¥1e3元",
+    "买菜￥1,000元",
+    "买菜¥1,000",
+  ])("拒绝不准确金额：%s", (text) => {
+    const r = parseExpenses(text, [], today);
+    expect(r.drafts).toEqual([]);
+    expect(r.warnings.length).toBeGreaterThan(0);
+  });
+  it("失败提示示例可实际解析", () => {
+    expect(parseExpenses("买菜", [], today).warnings[0]).toContain(
+      "买菜 38 元",
+    );
+    expect(parseExpenses("买菜 38 元", [], today).drafts[0].amount).toBe(
+      "38.00",
+    );
+  });
+});

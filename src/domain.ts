@@ -50,7 +50,8 @@ export function makeEntry(d: Draft, previous?: Entry): Entry {
   if (!description || description.length > 120)
     throw new Error("请填写消费内容（最多 120 字）");
   if (!validDate(d.spent_on)) throw new Error("请选择有效日期");
-  if (!["necessary", "discretionary"].includes(d.category)) throw new Error("请选择必要或非必要分类");
+  if (!["necessary", "discretionary"].includes(d.category))
+    throw new Error("请选择必要或非必要分类");
   const now = new Date().toISOString();
   return {
     id: previous?.id ?? crypto.randomUUID(),
@@ -135,9 +136,11 @@ function numberValue(s: string): number {
   }
   return total + section + current;
 }
-const num = "[0-9零〇一二两三四五六七八九十百千万点]+(?:\\.[0-9]{1,2})?";
+const num = "[0-9零〇一二两三四五六七八九十百千万点]+(?:\\.[0-9]+)?";
+const unitAmount = `(${num})\\s*(?:元|块)(?:钱)?(?:\\s*(${num})\\s*(?:角|毛)(?:\\s*(${num})\\s*分)?|\\s*(${num})\\s*分|([0-9一二两三四五六七八九]))?`;
+// Unit form first: ¥38元 is one token, never two candidates.
 const amountPattern = new RegExp(
-  `(${num})(?:元|块)(?:钱)?(?:(${num})(?:角|毛)(?:(${num})分)?|(${num})分|([0-9一二两三四五六七八九]))?`,
+  `(?:[¥￥]\\s*)?${unitAmount}|[¥￥]\\s*(${num})`,
   "g",
 );
 export function parseExpenses(
@@ -156,7 +159,11 @@ export function parseExpenses(
       warnings: ["没有识别到明确金额。请使用“买菜 38 元”，或切换手动记账。"],
     };
   if (
-    /还是|或者|大约|大概|左右|可能|到\s*\d+\s*(元|块)|至\s*\d+\s*(元|块)/.test(
+    /[¥￥]\s*[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?\d|[,，]\d{3})/.test(text) ||
+    new RegExp(
+      `(?:[¥￥]\\s*${num}|${num}\\s*(?:元|块))\\s*[-~～—]\\s*(?:[¥￥]\\s*)?${num}`,
+    ).test(text) ||
+    /还是|或者|大约|大概|左右|可能|(?:到|至|或)\s*(?:[¥￥]\s*\d+|\d+\s*(?:元|块))/.test(
       text,
     )
   )
@@ -191,13 +198,16 @@ export function parseExpenses(
       )
       .trim();
     if (
-      /[0-9.\-负]$/.test(prefix) ||
+      /[0-9.\-−负¥￥]\s*$/.test(prefix) ||
+      /[¥￥]\s*[-−负]/.test(prefix) ||
+      (match[6] !== undefined &&
+        /^(?:[eE][+-]?\d|[,，]\d{3}(?:\D|$))/.test(text.slice(cursor))) ||
       /^[0-9零〇一二两三四五六七八九]/.test(text.slice(cursor))
     ) {
       warnings.push("金额格式存在歧义，请手动填写，最多两位小数。");
       continue;
     }
-    const base = numberValue(match[1]);
+    const base = numberValue(match[1] ?? match[6]);
     const cents =
       Math.round(base * 100) +
       (match[2] ? numberValue(match[2]) * 10 : 0) +
@@ -206,6 +216,9 @@ export function parseExpenses(
       (match[5] ? numberValue(match[5]) * 10 : 0);
     if (
       Math.abs(base * 100 - Math.round(base * 100)) > 0.00001 ||
+      (match[1]?.includes(".") && match[1].split(".")[1].length > 2) ||
+      (match[6]?.includes(".") && match[6].split(".")[1].length > 2) ||
+      /^[.零〇一二两三四五六七八九0-9]/.test(text.slice(cursor)) ||
       !description ||
       !Number.isSafeInteger(cents) ||
       cents <= 0 ||

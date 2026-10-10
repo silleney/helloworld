@@ -1364,3 +1364,237 @@ dialog::backdrop {
     font-size: 10px;
   }
 }
+
+/* V1.1: all visual changes are scoped to the mobile home page. */
+.mobile-home-title,
+.mobile-input-feedback,
+.mobile-draft-total {
+  display: none;
+}
+@media (max-width: 600px) {
+  .page-home {
+    color: #222631;
+    background: #f9f9fb;
+    min-height: 100dvh;
+  }
+  .page-home .topbar {
+    height: 52px;
+    padding: 0 16px;
+    background: #fff;
+    border-color: #edeef5;
+  }
+  .page-home .breadcrumb,
+  .page-home .page-heading {
+    display: none;
+  }
+  .page-home .mobile-home-title {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+  .page-home .mobile-home-title strong {
+    font-size: 20px;
+  }
+  .page-home .mobile-home-title span {
+    font-size: 12px;
+    color: #595f73;
+  }
+  .page-home main {
+    padding: 14px 16px calc(100px + env(safe-area-inset-bottom));
+  }
+  .page-home .home-content .summary-grid {
+    order: 0;
+  }
+  .page-home .home-content .home-columns {
+    order: 1;
+  }
+  .page-home .home-content .drafts-panel {
+    order: 2;
+  }
+  .page-home .summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .page-home .total-card {
+    grid-column: 1 / -1;
+    padding: 16px 18px;
+    background: #edeef5;
+    color: #222631;
+    border-radius: 14px;
+  }
+  .page-home .card-label {
+    color: #595f73;
+    font-size: 13px;
+  }
+  .page-home .big-money {
+    font-size: clamp(25px, 8.5vw, 36px);
+    font-weight: 750;
+    margin: 4px 0 0;
+    letter-spacing: -1px;
+    overflow-wrap: anywhere;
+  }
+  .page-home .big-money small {
+    color: #595f73;
+  }
+  .page-home .total-foot,
+  .page-home .card-decoration {
+    display: none;
+  }
+  .page-home .summary-card {
+    padding: 12px;
+    background: #fff;
+    border-color: #edeef5;
+    min-width: 0;
+  }
+  .page-home .summary-top {
+    gap: 6px;
+    font-size: 12px;
+    color: #595f73;
+  }
+  .page-home .category-icon {
+    display: none;
+  }
+  .page-home .summary-money {
+    font-size: clamp(17px, 5.4vw, 23px);
+    font-weight: 700;
+    color: #222631;
+    overflow-wrap: anywhere;
+    letter-spacing: -0.5px;
+  }
+  .page-home .summary-money small {
+    color: #595f73;
+  }
+  .page-home .summary-card p {
+    font-size: 0;
+    margin-top: 4px;
+  }
+  .page-home .summary-card p span {
+    font-size: 11px;
+    color: #595f73;
+  }
+  .page-home .progress {
+    height: 4px;
+    background: #edeef5;
+  }
+  .page-home .progress i {
+    background: #7985b5;
+  }
+  .page-home .progress.warm i {
+    background: #c3c9de;
+  }
+  .page-home .home-columns {
+    gap: 0;
+    margin-bottom: 14px;
+  }
+  .page-home .home-columns aside {
+    display: none;
+  }
+  .page-home .panel {
+    background: #fff;
+    border-color: #edeef5;
+    padding: 14px;
+  }
+  .page-home .section-title {
+    margin-bottom: 10px;
+  }
+  .page-home .quick-panel textarea {
+    min-height: 64px;
+    height: 64px;
+    font-size: 16px;
+    color: #222631;
+    border-color: #c3c9de;
+    background: #f9f9fb;
+    transition: height 0.15s;
+  }
+  .page-home .quick-panel textarea:focus {
+    height: 110px;
+  }
+  .page-home .voice-tip {
+    color: #595f73;
+    font-size: 11px;
+    margin-top: 6px;
+  }
+  .page-home .quick-actions {
+    margin-top: 10px;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .page-home .primary {
+    background: #596795;
+    color: #fff;
+  }
+  .page-home .secondary {
+    background: #edeef5;
+    color: #394568;
+    border-color: #c3c9de;
+  }
+  .page-home .text-button {
+    color: #465580;
+  }
+  .page-home input,
+  .page-home select {
+    color: #222631;
+    border-color: #c3c9de;
+  }
+  .page-home :is(button, input, textarea, select):focus-visible {
+    outline-color: #596795;
+  }
+  .page-home .sidebar {
+    background: #fffffff2;
+    border-color: #edeef5;
+  }
+  .page-home .sidebar nav button.active {
+    color: #465580;
+  }
+  .page-home .mobile-input-feedback {
+    display: block;
+  }
+  .page-home .mobile-input-feedback .banner {
+    margin: 10px 0 0;
+  }
+  .page-home .global-error,
+  .page-home .empty-composer {
+    display: none;
+  }
+  .page-home .mobile-draft-total {
+    display: block;
+    margin-bottom: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+  .page-home .draft-footer {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .page-home .draft-row {
+    min-width: 0;
+  }
+  .page-home .drafts-panel {
+    scroll-margin-top: 12px;
+  }
+  .page-home .recent-panel .entry {
+    padding: 12px 0;
+  }
+}
+@media (max-width: 600px) {
+  .page-home .total-card {
+    min-height: 118px;
+  }
+  .page-home .summary-card {
+    min-height: 100px;
+  }
+  .page-home .local-status {
+    color: #465580;
+    background: #edeef5;
+    border-color: #c3c9de;
+  }
+  .page-home .input-caption,
+  .page-home .confirmation-tip {
+    color: #595f73;
+  }
+  .page-home .quick-panel textarea::placeholder {
+    color: #666b7d;
+  }
+}
