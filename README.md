@@ -1,3 +1,5 @@
+> **iPhone 局域网 HTTPS 验收请先阅读 [手机操作指南](README-iPhone.md)。** 首次执行 `bash Prepare-iPhone.command`，之后使用 `Start-iPhone.command` / `Stop-iPhone.command`。下面的 `Start.command` 仍只用于原有电脑 HTTP 验收。
+
 # 小账 · Mac Catalina 静态验收包
 
 这是阶段 A 的已构建页面，不需要 Node.js、不需要 npm、不安装项目依赖。只在你的 Mac 上预览，没有网站部署、账户或云同步，不收取费用。

@@ -8,3 +8,12 @@ __pycache__/
 *.key
 *.p12
 *.pfx
+
+# Never commit local test certificates, keys or process state
+*.cer
+*.crt
+*.p7b
+*.p7c
+*.p12
+*.pfx
+server.json
