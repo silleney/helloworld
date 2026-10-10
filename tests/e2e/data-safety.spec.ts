@@ -1,3 +1,4 @@
+import { expandDraft } from "./helpers";
 import { test, expect } from "@playwright/test";
 import { createServer } from "node:http";
 import { execFileSync } from "node:child_process";
@@ -101,6 +102,7 @@ test("V1.0 多笔真实保存 → V1.2 PWA 更新与 JSON 往返不改变账目"
       .toBe(true);
     await page.getByLabel("今天花了什么？").fill("买菜38元，零食25元");
     await page.getByRole("button", { name: "识别账目" }).click();
+    await expandDraft(page, 1);
     await page.getByLabel("消费日期 1", { exact: true }).fill("2025-12-31");
     await page.getByRole("button", { name: "确认保存 2 笔" }).click();
     await expect(page.locator(".entry")).toHaveCount(2);

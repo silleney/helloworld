@@ -136,6 +136,13 @@ function numberValue(s: string): number {
   }
   return total + section + current;
 }
+// Only an exact two-part comma repetition is unambiguous enough to collapse.
+export function cleanDescription(description: string): string {
+  const parts = description.split(/[，,]/).map((part) => part.trim());
+  return parts.length === 2 && parts[0] && parts[0] === parts[1]
+    ? parts[0]
+    : description;
+}
 const num = "[0-9零〇一二两三四五六七八九十百千万点]+(?:\\.[0-9]+)?";
 const unitAmount = `(${num})\\s*(?:元|块)(?:钱)?(?:\\s*(${num})\\s*(?:角|毛)(?:\\s*(${num})\\s*分)?|\\s*(${num})\\s*分|([0-9一二两三四五六七八九]))?`;
 // Unit form first: ¥38元 is one token, never two candidates.
@@ -189,14 +196,16 @@ export function parseExpenses(
     }
     const explicit = prefix.match(/\d{4}-\d{2}-\d{2}/);
     if (explicit) date = explicit[0];
-    const description = prefix
-      .replace(/\d{4}-\d{2}-\d{2}|前天|昨天|今天/g, "")
-      .replace(/^[\s，,。；;、和然后]+/, "")
-      .replace(
-        /(?:花了?|用了?|支付了?|付了?|总共|一共|共计|是|为|价格|费用|花费|消费了?)\s*$/,
-        "",
-      )
-      .trim();
+    const description = cleanDescription(
+      prefix
+        .replace(/\d{4}-\d{2}-\d{2}|前天|昨天|今天/g, "")
+        .replace(/^[\s，,。；;、和然后]+/, "")
+        .replace(
+          /(?:花了?|用了?|支付了?|付了?|总共|一共|共计|是|为|价格|费用|花费|消费了?)\s*$/,
+          "",
+        )
+        .trim(),
+    );
     if (
       /[0-9.\-−负¥￥]\s*$/.test(prefix) ||
       /[¥￥]\s*[-−负]/.test(prefix) ||

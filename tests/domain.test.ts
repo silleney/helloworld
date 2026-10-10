@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   amountText,
+  cleanDescription,
   exportCSV,
   localDate,
   makeEntry,
@@ -239,5 +240,36 @@ describe("V1.1 人民币金额边界", () => {
     expect(parseExpenses("买菜 38 元", [], today).drafts[0].amount).toBe(
       "38.00",
     );
+  });
+});
+
+describe("V1.3 保守描述清洗", () => {
+  it.each([
+    ["买菜，买菜", "买菜"],
+    ["咖啡,咖啡", "咖啡"],
+    ["买了两份买菜礼包", "买了两份买菜礼包"],
+    ["买菜，买菜礼包", "买菜，买菜礼包"],
+    ["买菜买菜", "买菜买菜"],
+    ["咖啡，咖啡，咖啡", "咖啡，咖啡，咖啡"],
+  ])("%s", (input, expected) => expect(cleanDescription(input)).toBe(expected));
+  it.each(["今天买菜花了38", "买菜，买菜花了38"])(
+    "缺少明确金额单位不猜测：%s",
+    (input) => {
+      const r = parseExpenses(input, [], today);
+      expect(r.drafts).toEqual([]);
+      expect(r.warnings.length).toBeGreaterThan(0);
+    },
+  );
+  it.each([
+    ["今天买菜，买菜花了3块5", "买菜", "3.50"],
+    ["买菜，买菜花了38元", "买菜", "38.00"],
+    ["咖啡，咖啡12元", "咖啡", "12.00"],
+    ["买了两份买菜礼包38元", "买了两份买菜礼包", "38.00"],
+  ])("解析 %s", (input, description, amount) => {
+    expect(parseExpenses(input, [], today).drafts).toHaveLength(1);
+    expect(parseExpenses(input, [], today).drafts[0]).toMatchObject({
+      description,
+      amount,
+    });
   });
 });

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useRegisterSW } from "virtual:pwa-register/react";
 import { IndexedDBLedger } from "./storage";
 import {
@@ -162,10 +162,42 @@ export default function App() {
   const lock = useRef(false),
     speech = useRef<Speech | null>(null),
     [listening, setListening] = useState(false);
+  const [expandedDraft, setExpandedDraft] = useState<number | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const channel = useRef<BroadcastChannel | null>(null);
   const modalRef = useRef<HTMLDialogElement>(null);
+  const resizeInput = () => {
+    const input = inputRef.current;
+    if (!input) return;
+    if (!isMobile) {
+      input.style.height = "";
+      return;
+    }
+    const min = document.activeElement === input ? 96 : 64;
+    const max = Math.max(
+      min,
+      Math.min(
+        240,
+        (window.visualViewport?.height ?? window.innerHeight) * 0.4,
+      ),
+    );
+    input.style.height = "0px";
+    input.style.height = `${Math.min(max, Math.max(min, input.scrollHeight + 2))}px`;
+  };
+  useLayoutEffect(resizeInput, [text, isMobile, page, loading, dbError]);
+  useEffect(() => {
+    // Keyboard-close events must not move a button while its tap is in flight.
+    const whileEditing = () => {
+      if (document.activeElement === inputRef.current) resizeInput();
+    };
+    window.visualViewport?.addEventListener("resize", whileEditing);
+    window.addEventListener("resize", whileEditing);
+    return () => {
+      window.visualViewport?.removeEventListener("resize", whileEditing);
+      window.removeEventListener("resize", whileEditing);
+    };
+  }, [isMobile]);
   const refresh = async () => {
     try {
       const all = await getRepo().list();
@@ -254,7 +286,14 @@ export default function App() {
   const save = () =>
     void mutate(
       async () => {
-        const validated = drafts.map((d) => makeEntry(d, editing ?? undefined));
+        const validated = drafts.map((d, i) => {
+          try {
+            return makeEntry(d, editing ?? undefined);
+          } catch (error) {
+            setExpandedDraft(i);
+            throw error;
+          }
+        });
         if (!validated.length) throw new Error("请先添加待确认账目");
         if (editing) {
           const latest = (await getRepo().list()).find(
@@ -285,6 +324,7 @@ export default function App() {
       setError("请先保存或取消现有待确认账目，再识别新文字");
       return;
     }
+    setExpandedDraft(null);
     const result = parseExpenses(text, entries, localDate(), textSource);
     setDrafts(result.drafts);
     setWarnings(result.warnings);
@@ -292,14 +332,17 @@ export default function App() {
     setError("");
     if (result.drafts.length && window.matchMedia("(max-width: 600px)").matches)
       inputRef.current?.blur();
+    resizeInput();
   };
   const manual = () => {
+    setExpandedDraft(drafts.length);
     setEditing(null);
     setDrafts((d) => [...d, blank()]);
     setComposer(true);
     setError("");
   };
   const cancel = () => {
+    setExpandedDraft(null);
     setDrafts([]);
     setWarnings([]);
     setEditing(null);
@@ -311,6 +354,7 @@ export default function App() {
       setError("请先保存或取消待确认账目，再编辑历史记录");
       return;
     }
+    setExpandedDraft(0);
     setEditing(e);
     setDrafts([
       {
@@ -774,6 +818,7 @@ export default function App() {
                   </label>
                   <textarea
                     ref={inputRef}
+                    onFocus={resizeInput}
                     id="expense-text"
                     placeholder={
                       isMobile
@@ -902,72 +947,101 @@ export default function App() {
                   ))}
                   {drafts.map((d, i) => (
                     <div className="draft-row" key={i}>
-                      <label>
-                        消费内容
-                        <input
-                          aria-label={`消费内容 ${i + 1}`}
-                          value={d.description}
-                          maxLength={120}
-                          onChange={(e) =>
-                            patch(i, "description", e.target.value)
-                          }
-                          onBlur={() => {
-                            if (!d.category)
-                              patch(
-                                i,
-                                "category",
-                                suggestCategory(d.description, entries),
-                              );
-                          }}
-                          disabled={busy}
-                        />
-                      </label>
-                      <label>
-                        金额（元）
-                        <input
-                          aria-label={`金额 ${i + 1}`}
-                          inputMode="decimal"
-                          value={d.amount}
-                          placeholder="0.00"
-                          onChange={(e) => patch(i, "amount", e.target.value)}
-                          disabled={busy}
-                        />
-                      </label>
-                      <label>
-                        消费日期
-                        <input
-                          aria-label={`消费日期 ${i + 1}`}
-                          type="date"
-                          value={d.spent_on}
-                          onChange={(e) => patch(i, "spent_on", e.target.value)}
-                          disabled={busy}
-                        />
-                      </label>
-                      <label>
-                        分类
-                        <select
-                          aria-label={`分类 ${i + 1}`}
-                          value={d.category}
-                          onChange={(e) => patch(i, "category", e.target.value)}
-                          disabled={busy}
-                        >
-                          <option value="">待确认，请选择</option>
-                          <option value="necessary">必要生活开支</option>
-                          <option value="discretionary">非必要开支</option>
-                        </select>
-                      </label>
-                      {!editing && (
-                        <button
-                          className="icon-button"
-                          aria-label={`移除待确认 ${i + 1}`}
-                          onClick={() =>
-                            setDrafts((old) => old.filter((_, j) => j !== i))
-                          }
-                          disabled={busy}
-                        >
-                          <Icon name="close" size={17} />
-                        </button>
-                      )}
+                      <button
+                        className="draft-summary"
+                        type="button"
+                        aria-expanded={expandedDraft === i || !!editing}
+                        aria-controls={`draft-fields-${i}`}
+                        aria-label={`编辑待确认 ${i + 1}`}
+                        disabled={busy}
+                        onClick={() =>
+                          setExpandedDraft(expandedDraft === i ? null : i)
+                        }
+                      >
+                        <span>
+                          {d.description || "请填写消费内容"}
+                          <small>
+                            {d.category ? categories[d.category] : "分类待确认"}
+                          </small>
+                        </span>
+                        <strong>¥ {d.amount || "待填写"}</strong>
+                      </button>
+                      <div
+                        id={`draft-fields-${i}`}
+                        className={`draft-fields ${expandedDraft === i || editing ? "expanded" : ""}`}
+                      >
+                        <label>
+                          消费内容
+                          <input
+                            aria-label={`消费内容 ${i + 1}`}
+                            value={d.description}
+                            maxLength={120}
+                            onChange={(e) =>
+                              patch(i, "description", e.target.value)
+                            }
+                            onBlur={() => {
+                              if (!d.category)
+                                patch(
+                                  i,
+                                  "category",
+                                  suggestCategory(d.description, entries),
+                                );
+                            }}
+                            disabled={busy}
+                          />
+                        </label>
+                        <label>
+                          金额（元）
+                          <input
+                            aria-label={`金额 ${i + 1}`}
+                            inputMode="decimal"
+                            value={d.amount}
+                            placeholder="0.00"
+                            onChange={(e) => patch(i, "amount", e.target.value)}
+                            disabled={busy}
+                          />
+                        </label>
+                        <label>
+                          消费日期
+                          <input
+                            aria-label={`消费日期 ${i + 1}`}
+                            type="date"
+                            value={d.spent_on}
+                            onChange={(e) =>
+                              patch(i, "spent_on", e.target.value)
+                            }
+                            disabled={busy}
+                          />
+                        </label>
+                        <label>
+                          分类
+                          <select
+                            aria-label={`分类 ${i + 1}`}
+                            value={d.category}
+                            onChange={(e) =>
+                              patch(i, "category", e.target.value)
+                            }
+                            disabled={busy}
+                          >
+                            <option value="">待确认，请选择</option>
+                            <option value="necessary">必要生活开支</option>
+                            <option value="discretionary">非必要开支</option>
+                          </select>
+                        </label>
+                        {!editing && (
+                          <button
+                            className="icon-button"
+                            aria-label={`移除待确认 ${i + 1}`}
+                            onClick={() => {
+                              setExpandedDraft(null);
+                              setDrafts((old) => old.filter((_, j) => j !== i));
+                            }}
+                            disabled={busy}
+                          >
+                            <Icon name="close" size={17} />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   ))}
                   <div className="draft-footer">

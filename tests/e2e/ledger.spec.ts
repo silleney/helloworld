@@ -1,3 +1,4 @@
+import { expandDraft } from "./helpers";
 import { test, expect } from "@playwright/test";
 import type { Page } from "@playwright/test";
 async function open(page: Page) {
@@ -29,6 +30,7 @@ test("多笔解析必须确认，增删改、统计、刷新与撤销", async ({
   await expect(page.getByLabel("分类 1", { exact: true })).toHaveValue(
     "necessary",
   );
+  await expandDraft(page, 2);
   await page.getByLabel("金额 2", { exact: true }).fill("12.50");
   await page.getByRole("button", { name: "确认保存 2 笔" }).dblclick();
   await expect(page.getByRole("status")).toContainText("已保存 2 笔");
@@ -328,6 +330,7 @@ test("V1.1 符号解析、精确合计、取消保留原文与零候选反馈", 
     await expect(page.locator(".mobile-draft-total")).toContainText(
       "合计 ¥ 0.30",
     );
+    await expandDraft(page, 2);
     await page.getByLabel("金额 2", { exact: true }).fill("1.234");
     await expect(page.locator(".mobile-draft-total")).toContainText(
       "合计待核对",

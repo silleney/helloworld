@@ -1818,3 +1818,63 @@ dialog::backdrop {
     border-color: #edeef5;
   }
 }
+/* Mobile summaries reuse the same fields/state as desktop. */
+.draft-summary {
+  display: none;
+}
+.draft-fields {
+  display: contents;
+}
+@media (max-width: 600px) {
+  .page-home .quick-panel textarea {
+    max-height: 240px;
+    overflow-y: auto;
+    resize: none;
+    transition: none;
+  }
+  .page-home .draft-row {
+    display: block;
+    padding: 8px 0;
+  }
+  .page-home .draft-summary {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    text-align: left;
+    background: transparent;
+    color: #222631;
+    padding: 8px 0;
+    gap: 12px;
+    min-height: 48px;
+  }
+  .page-home .draft-summary span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .page-home .draft-summary small {
+    display: block;
+    color: #595f73;
+    font-size: 11px;
+  }
+  .page-home .draft-summary strong {
+    max-width: 50%;
+    overflow-wrap: anywhere;
+    text-align: right;
+  }
+  .page-home .draft-fields {
+    display: none;
+  }
+  .page-home .draft-fields.expanded {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 8px;
+  }
+  .page-home .draft-fields label:first-child {
+    grid-column: 1 / -1;
+  }
+  .page-home .draft-fields input,
+  .page-home .draft-fields select {
+    font-size: 16px;
+  }
+}
