@@ -1,0 +1,17 @@
+{
+  "source_repository": "silleney/helloworld",
+  "source_commit": "3a924bd5a308fa8326a5e97c70b13adb458dab7b",
+  "build_command": "npm run build -- --target=safari15.4",
+  "files_sha256": {
+    "sw.js": "a261162395d2d3a9cce755400e6644a0c3b05b1e890df431aa41a9ab56cd1296",
+    "icon-512.png": "08bda2ddf35bb6cceab2a972fbe958320c8ff5a119cf6201b634d3746d01c28f",
+    "index.html": "2a18a175ad60a92083d8b5ca4494ac9a024b8bfef12b1d6b4c11b2a550137edf",
+    "icon.svg": "de858d4f46fcf36a9f318bb0464c3caf9824b84287348953bc252c5446138ade",
+    "icon-192.png": "460aa842d5301bd50812d7b55d741e6e5dede85bd106e30ddd6bfa26135dfdd2",
+    "workbox-2fbc6a65.js": "39c2e6ae44c3f29666f6a328b6523bf13a053a1d95c74af8ddea82b1045b0b6e",
+    "manifest.webmanifest": "8db0c7a13b79bbb1725c3a441b3dd8bc4d78f1b1f429889c0c2e2a52561fca1a",
+    "assets/index-BLIqspgw.css": "a050bf4cdcfefcec97d5da82a50cbbeb624214d71c940e8032142a988b72e801",
+    "assets/workbox-window.prod.es5-BBnX5xw4.js": "cadd21be4a88598a4dec91a26a025df0a5790ff6baec54a884e401c3f5c95557",
+    "assets/index-Pe6Ot3aj.js": "e8f150291a6aa0b89cf9d6a0a9fccc29b0483981221e0de34f11772f65c0646b"
+  }
+}

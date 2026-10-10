@@ -1,0 +1,1 @@
+{"name":"小账 · 极简语音记账","short_name":"小账","description":"简单记录，安心生活。个人本地记账本。","start_url":"/","display":"standalone","background_color":"#f6f7f2","theme_color":"#285747","lang":"zh-CN","scope":"/","icons":[{"src":"/icon-192.png","sizes":"192x192","type":"image/png"},{"src":"/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}
