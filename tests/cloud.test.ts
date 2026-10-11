@@ -304,4 +304,24 @@ describe("cloud preparation isolation and protocol", () => {
     );
     await expect(auth.token()).rejects.toThrow("请先登录");
   });
+  it("explicit keep-cloud choice preserves the original conflict request", async () => {
+    const a = api();
+    a.apply = vi.fn(async () => ({ status: "conflict", ledger_revision: 1 }));
+    const c = sync(a, store());
+    await c.stage(id, [change]);
+    await expect(c.sync()).rejects.toThrow("冲突");
+    await c.keepCloudVersion(id);
+    expect((await c.state()).operations[0]).toMatchObject({
+      state: "discarded",
+      changes: [change],
+    });
+    await c.sync();
+    expect(a.apply).toHaveBeenCalledTimes(1);
+  });
+  it("pending unknown-result operation cannot be discarded as a conflict", async () => {
+    const c = sync(api(), store());
+    await c.stage(id, [change]);
+    await expect(c.keepCloudVersion(id)).rejects.toThrow("已确认的冲突");
+    expect((await c.state()).operations[0].state).toBe("pending");
+  });
 });

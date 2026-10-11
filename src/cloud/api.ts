@@ -1,3 +1,4 @@
+import { timedFetch } from "./request";
 import { validateBackup } from "../domain";
 import type { Change, CloudAPI, Result, Snapshot } from "./types";
 export class CloudAPIError extends Error {
@@ -56,7 +57,7 @@ export class SupabaseLedgerAPI implements CloudAPI {
   constructor(
     private config: CloudConfig,
     private accessToken: () => Promise<string>,
-    private request: typeof fetch = fetch,
+    private request: typeof fetch = timedFetch,
   ) {
     this.origin = checkConfig(config);
   }

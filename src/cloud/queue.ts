@@ -149,6 +149,18 @@ export class CloudSync {
   async state() {
     return this.store.read(this.scope);
   }
+  async keepCloudVersion(operationId: string) {
+    if (this.closed || this.active) throw new Error("请等待当前同步结束");
+    const state = await this.state();
+    const op = state.operations.find((o) => o.operationId === operationId);
+    if (!op || op.state !== "conflict") throw new Error("只能处理已确认的冲突");
+    await this.store.cache(
+      this.scope,
+      checkSnapshot(await this.api.snapshot(this.ledgerId)),
+    );
+    if (this.closed) throw new Error("旧账号同步已停止");
+    await this.store.acknowledge(this.scope, { ...op, state: "discarded" });
+  }
   sync(): Promise<void> {
     if (this.closed) return Promise.reject(new Error("旧账号同步已停止"));
     if (!this.active)

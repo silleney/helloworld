@@ -1,3 +1,4 @@
+import { timedFetch } from "./request";
 import { checkConfig, type CloudConfig } from "./api";
 export type Session = {
   access_token: string;
@@ -14,7 +15,7 @@ export class SupabaseAuth {
   private refreshing: Promise<string> | null = null;
   constructor(
     private config: CloudConfig,
-    private request: typeof fetch = fetch,
+    private request: typeof fetch = timedFetch,
   ) {
     this.origin = checkConfig(config);
   }

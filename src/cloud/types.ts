@@ -16,7 +16,7 @@ export type Result = {
 export type Operation = {
   operationId: string;
   changes: Change[];
-  state: "pending" | "applied" | "conflict";
+  state: "pending" | "applied" | "conflict" | "discarded";
   result?: Result;
 };
 export interface CloudAPI {
